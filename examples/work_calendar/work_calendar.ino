@@ -89,7 +89,7 @@ void setup()
   Serial.begin(115200);
   Serial.println();
   Serial.println("Setup starting...");
-  
+
   // *** special handling for Waveshare ESP32 Driver board *** //
 #if defined(ESP32) && defined(USE_HSPI_FOR_EPD)
   Serial.println("Configuring HSPI for EPD...");
@@ -97,15 +97,15 @@ void setup()
   display.epd2.selectSPI(hspi, SPISettings(4000000, MSBFIRST, SPI_MODE0));
 #endif
   // *** end of special handling for Waveshare ESP32 Driver board *** //
-  
+
   display.init(115200);
-  
+
   // Initialize U8G2 fonts
   u8g2Fonts.begin(display);
-  
+
   // Display calendar
   displayCalendar();
-  
+
   Serial.println("Setup done");
 }
 
@@ -117,27 +117,27 @@ void loop()
 void displayCalendar()
 {
   Serial.println("Displaying Engineering Manager Calendar...");
-  
+
   // Set rotation to portrait (0 degrees)
   display.setRotation(0);
-  
+
   // Use full window mode
   display.setFullWindow();
-  
+
   // Use paged drawing
   display.firstPage();
   do
   {
     display.fillScreen(GxEPD_WHITE); // Set background to white
-    
+
     // Draw header
     drawHeader();
-    
+
     // Draw calendar items
     drawCalendarItems();
   }
   while (display.nextPage());
-  
+
   Serial.println("Calendar displayed");
 }
 
@@ -147,19 +147,19 @@ void drawHeader()
   u8g2Fonts.setFontMode(1);                 // transparent mode
   u8g2Fonts.setFontDirection(0);            // left to right
   u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
-  
+
   // Draw date only - clean and simple
   u8g2Fonts.setForegroundColor(GxEPD_BLACK);
   u8g2Fonts.setFont(u8g2_font_helvB18_tf);  // Helvetica Bold 18pt for date
-  
+
   const char* dateText = "Monday, December 16, 2024";
   int16_t tw = u8g2Fonts.getUTF8Width(dateText);
   uint16_t dateX = (display.width() - tw) / 2;
   uint16_t dateY = 40;
-  
+
   u8g2Fonts.setCursor(dateX, dateY);
   u8g2Fonts.print(dateText);
-  
+
   // Draw simple separator line
   uint16_t lineY = dateY + 25;
   display.fillRect(60, lineY, display.width() - 120, 2, GxEPD_BLACK);
@@ -168,10 +168,10 @@ void drawHeader()
 void drawCalendarItems()
 {
   uint16_t startY = 100; // Start closer to header since no title
-  uint16_t itemHeight = 85; // Slightly more space for larger fonts
+  uint16_t itemHeight = 85; // More space for time + duration stacked vertically
   uint16_t leftMargin = 40;
   uint16_t rightMargin = 40;
-  uint16_t timeWidth = 150; // Slightly wider for larger time font
+  uint16_t timeWidth = 150; // Width for time column
   
   for (int i = 0; i < numItems; i++) {
     uint16_t currentY = startY + (i * itemHeight);
@@ -185,27 +185,25 @@ void drawCalendarItems()
     
     // Draw time with larger professional monospace font
     u8g2Fonts.setForegroundColor(GxEPD_RED);
-    u8g2Fonts.setFont(u8g2_font_profont15_mr);  // Available monospace font
+    u8g2Fonts.setFont(u8g2_font_profont17_mr);  // Larger monospace font for time
     u8g2Fonts.setCursor(leftMargin, currentY);
     u8g2Fonts.print(calendarItems[i].time);
+    
+    // Draw duration under the time with larger font
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setFont(u8g2_font_profont15_mr);  // Larger font for duration
+    u8g2Fonts.setCursor(leftMargin, currentY + 20); // 20px below the time
+    u8g2Fonts.print(calendarItems[i].duration);
     
     // Draw meeting title with larger clean sans-serif font
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
     u8g2Fonts.setFont(u8g2_font_helvR18_tf);  // Available larger Helvetica Regular
-    u8g2Fonts.setCursor(leftMargin + timeWidth, currentY);
+    u8g2Fonts.setCursor(leftMargin + timeWidth, currentY + 10); // Centered vertically with time+duration
     u8g2Fonts.print(calendarItems[i].title);
-    
-    // Draw duration with larger monospace font (right aligned)
-    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
-    u8g2Fonts.setFont(u8g2_font_profont12_mr);  // Available monospace for duration
-    int16_t tw = u8g2Fonts.getUTF8Width(calendarItems[i].duration);
-    uint16_t durationX = display.width() - rightMargin - tw;
-    u8g2Fonts.setCursor(durationX, currentY);
-    u8g2Fonts.print(calendarItems[i].duration);
     
     // Draw subtle separator line between items (except last one)
     if (i < numItems - 1) {
-      uint16_t lineY = currentY + 38; // Adjusted for larger fonts
+      uint16_t lineY = currentY + 38; // Adjusted for stacked time/duration layout
       // Dotted line effect with small rectangles
       for (uint16_t x = leftMargin + timeWidth; x < display.width() - rightMargin; x += 8) {
         display.fillRect(x, lineY, 4, 1, GxEPD_BLACK);
