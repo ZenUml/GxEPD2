@@ -39,10 +39,21 @@
 
 #include <GxEPD2_3C.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
+#include <Fonts/FreeMonoBold12pt7b.h>
+#include <Fonts/FreeSans12pt7b.h>
+#include <Fonts/FreeSans18pt7b.h>
 
 // Current configuration: 7.5" 3-color e-paper display
 #define GxEPD2_DISPLAY_CLASS GxEPD2_3C
 #define GxEPD2_DRIVER_CLASS GxEPD2_750c_Z08 // GDEW075Z08  800x480, EK79655 (GD7965), (WFT0583CZ61)
+
+// For even better font quality, consider using U8G2 fonts:
+// Uncomment the following lines and modify the drawing functions:
+// #include <U8g2_for_Adafruit_GFX.h>
+// U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
+// In setup(): u8g2Fonts.begin(display);
+// Use fonts like: u8g2_font_helvR14_tf, u8g2_font_helvB18_tf
+// See: https://github.com/olikraus/u8g2/wiki/fntlistall
 
 // Helper macros for display configuration
 #define GxEPD2_3C_IS_GxEPD2_3C true
@@ -58,6 +69,24 @@ GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> displ
 #if defined(ESP32) && defined(USE_HSPI_FOR_EPD)
 SPIClass hspi(HSPI);
 #endif
+
+// Calendar item structure
+struct CalendarItem {
+  const char* time;
+  const char* title;
+  const char* duration;
+};
+
+// Sample calendar items for a software engineering manager
+CalendarItem calendarItems[] = {
+  {"9:00 AM", "Sprint Planning Meeting", "2h"},
+  {"11:30 AM", "1:1 with Sarah (Senior Dev)", "30m"},
+  {"1:00 PM", "Architecture Review", "1.5h"},
+  {"3:00 PM", "Team Standup", "15m"},
+  {"4:00 PM", "Code Review Session", "1h"}
+};
+
+const int numItems = sizeof(calendarItems) / sizeof(CalendarItem);
 
 void setup()
 {
@@ -75,8 +104,8 @@ void setup()
   
   display.init(115200);
   
-  // Display Hello World
-  helloWorld();
+  // Display calendar
+  displayCalendar();
   
   Serial.println("Setup done");
 }
@@ -86,29 +115,12 @@ void loop()
   // Nothing to do in loop
 }
 
-void helloWorld()
+void displayCalendar()
 {
-  Serial.println("Displaying Hello World...");
+  Serial.println("Displaying Engineering Manager Calendar...");
   
-  const char text[] = "Hello World!";
-  
-  // Set rotation to landscape for better text display
-  display.setRotation(1);
-  
-  // Select a suitable font
-  display.setFont(&FreeMonoBold9pt7b);
-  
-  // Set text color to black
-  display.setTextColor(GxEPD_BLACK);
-  
-  // Calculate text bounds for centering
-  int16_t tbx, tby; 
-  uint16_t tbw, tbh;
-  display.getTextBounds(text, 0, 0, &tbx, &tby, &tbw, &tbh);
-  
-  // Center the text
-  uint16_t x = ((display.width() - tbw) / 2) - tbx;
-  uint16_t y = ((display.height() - tbh) / 2) - tby;
+  // Set rotation to portrait (0 degrees)
+  display.setRotation(0);
   
   // Use full window mode
   display.setFullWindow();
@@ -118,10 +130,83 @@ void helloWorld()
   do
   {
     display.fillScreen(GxEPD_WHITE); // Set background to white
-    display.setCursor(x, y);
-    display.print(text);
+    
+    // Draw header
+    drawHeader();
+    
+    // Draw calendar items
+    drawCalendarItems();
   }
   while (display.nextPage());
   
-  Serial.println("Hello World displayed");
+  Serial.println("Calendar displayed");
+}
+
+void drawHeader()
+{
+  // Draw date with larger font
+  display.setFont(&FreeSans12pt7b);
+  display.setTextColor(GxEPD_RED);
+  
+  const char* dateText = "Today - Monday, December 16, 2024";
+  int16_t tbx, tby; 
+  uint16_t tbw, tbh;
+  display.getTextBounds(dateText, 0, 0, &tbx, &tby, &tbw, &tbh);
+  uint16_t dateX = (display.width() - tbw) / 2;
+  uint16_t dateY = 30;
+  
+  display.setCursor(dateX, dateY);
+  display.print(dateText);
+  
+  // Draw title with even larger font
+  display.setFont(&FreeSans18pt7b);
+  const char* titleText = "Engineering Manager Calendar";
+  display.getTextBounds(titleText, 0, 0, &tbx, &tby, &tbw, &tbh);
+  uint16_t titleX = (display.width() - tbw) / 2;
+  uint16_t titleY = dateY + 45;
+  
+  display.setCursor(titleX, titleY);
+  display.print(titleText);
+  
+  // Draw separator line
+  display.drawLine(50, titleY + 20, display.width() - 50, titleY + 20, GxEPD_BLACK);
+}
+
+void drawCalendarItems()
+{
+  uint16_t startY = 120; // Start below header (adjusted for larger header)
+  uint16_t itemHeight = 75; // Increased space between items
+  uint16_t leftMargin = 30;
+  uint16_t rightMargin = 30;
+  
+  for (int i = 0; i < numItems; i++) {
+    uint16_t currentY = startY + (i * itemHeight);
+    
+    // Draw time (red, left aligned) with larger font
+    display.setFont(&FreeMonoBold12pt7b);
+    display.setTextColor(GxEPD_RED);
+    display.setCursor(leftMargin, currentY);
+    display.print(calendarItems[i].time);
+    
+    // Draw title (black, indented) with readable font
+    display.setFont(&FreeSans12pt7b);
+    display.setTextColor(GxEPD_BLACK);
+    display.setCursor(leftMargin + 130, currentY);
+    display.print(calendarItems[i].title);
+    
+    // Draw duration (black, right aligned)
+    display.setFont(&FreeMonoBold12pt7b);
+    int16_t tbx, tby; 
+    uint16_t tbw, tbh;
+    display.getTextBounds(calendarItems[i].duration, 0, 0, &tbx, &tby, &tbw, &tbh);
+    uint16_t durationX = display.width() - rightMargin - tbw;
+    display.setCursor(durationX, currentY);
+    display.print(calendarItems[i].duration);
+    
+    // Draw subtle separator line between items (except last one)
+    if (i < numItems - 1) {
+      uint16_t lineY = currentY + 30;
+      display.drawLine(leftMargin + 130, lineY, display.width() - rightMargin, lineY, GxEPD_BLACK);
+    }
+  }
 }
