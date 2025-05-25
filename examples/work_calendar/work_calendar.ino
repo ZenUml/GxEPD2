@@ -42,18 +42,14 @@
 #include <Fonts/FreeMonoBold12pt7b.h>
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSans18pt7b.h>
+#include <U8g2_for_Adafruit_GFX.h>
 
 // Current configuration: 7.5" 3-color e-paper display
 #define GxEPD2_DISPLAY_CLASS GxEPD2_3C
 #define GxEPD2_DRIVER_CLASS GxEPD2_750c_Z08 // GDEW075Z08  800x480, EK79655 (GD7965), (WFT0583CZ61)
 
-// For even better font quality, consider using U8G2 fonts:
-// Uncomment the following lines and modify the drawing functions:
-// #include <U8g2_for_Adafruit_GFX.h>
-// U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
-// In setup(): u8g2Fonts.begin(display);
-// Use fonts like: u8g2_font_helvR14_tf, u8g2_font_helvB18_tf
-// See: https://github.com/olikraus/u8g2/wiki/fntlistall
+// U8G2 fonts for better text quality
+U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 
 // Helper macros for display configuration
 #define GxEPD2_3C_IS_GxEPD2_3C true
@@ -104,6 +100,9 @@ void setup()
   
   display.init(115200);
   
+  // Initialize U8G2 fonts
+  u8g2Fonts.begin(display);
+  
   // Display calendar
   displayCalendar();
   
@@ -144,64 +143,65 @@ void displayCalendar()
 
 void drawHeader()
 {
-  // Draw date with larger font
-  display.setFont(&FreeSans12pt7b);
-  display.setTextColor(GxEPD_RED);
+  // Configure U8G2 font settings
+  u8g2Fonts.setFontMode(1);                 // transparent mode
+  u8g2Fonts.setFontDirection(0);            // left to right
+  u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
+  
+  // Draw date with U8G2 font
+  u8g2Fonts.setForegroundColor(GxEPD_RED);
+  u8g2Fonts.setFont(u8g2_font_helvR14_tf);  // Helvetica Regular 14pt
   
   const char* dateText = "Today - Monday, December 16, 2024";
-  int16_t tbx, tby; 
-  uint16_t tbw, tbh;
-  display.getTextBounds(dateText, 0, 0, &tbx, &tby, &tbw, &tbh);
-  uint16_t dateX = (display.width() - tbw) / 2;
-  uint16_t dateY = 30;
+  int16_t tw = u8g2Fonts.getUTF8Width(dateText);
+  uint16_t dateX = (display.width() - tw) / 2;
+  uint16_t dateY = 35;
   
-  display.setCursor(dateX, dateY);
-  display.print(dateText);
+  u8g2Fonts.setCursor(dateX, dateY);
+  u8g2Fonts.print(dateText);
   
-  // Draw title with even larger font
-  display.setFont(&FreeSans18pt7b);
+  // Draw title with larger U8G2 font
+  u8g2Fonts.setFont(u8g2_font_helvB18_tf);  // Helvetica Bold 18pt
   const char* titleText = "Engineering Manager Calendar";
-  display.getTextBounds(titleText, 0, 0, &tbx, &tby, &tbw, &tbh);
-  uint16_t titleX = (display.width() - tbw) / 2;
-  uint16_t titleY = dateY + 45;
+  tw = u8g2Fonts.getUTF8Width(titleText);
+  uint16_t titleX = (display.width() - tw) / 2;
+  uint16_t titleY = dateY + 50;
   
-  display.setCursor(titleX, titleY);
-  display.print(titleText);
+  u8g2Fonts.setCursor(titleX, titleY);
+  u8g2Fonts.print(titleText);
   
   // Draw separator line
-  display.drawLine(50, titleY + 20, display.width() - 50, titleY + 20, GxEPD_BLACK);
+  display.drawLine(50, titleY + 25, display.width() - 50, titleY + 25, GxEPD_BLACK);
 }
 
 void drawCalendarItems()
 {
-  uint16_t startY = 120; // Start below header (adjusted for larger header)
-  uint16_t itemHeight = 75; // Increased space between items
+  uint16_t startY = 130; // Start below header (adjusted for U8G2 fonts)
+  uint16_t itemHeight = 75; // Space between items
   uint16_t leftMargin = 30;
   uint16_t rightMargin = 30;
   
   for (int i = 0; i < numItems; i++) {
     uint16_t currentY = startY + (i * itemHeight);
     
-    // Draw time (red, left aligned) with larger font
-    display.setFont(&FreeMonoBold12pt7b);
-    display.setTextColor(GxEPD_RED);
-    display.setCursor(leftMargin, currentY);
-    display.print(calendarItems[i].time);
+    // Draw time (red, left aligned) with U8G2 monospace font
+    u8g2Fonts.setForegroundColor(GxEPD_RED);
+    u8g2Fonts.setFont(u8g2_font_profont15_mr);  // Professional monospace font
+    u8g2Fonts.setCursor(leftMargin, currentY);
+    u8g2Fonts.print(calendarItems[i].time);
     
-    // Draw title (black, indented) with readable font
-    display.setFont(&FreeSans12pt7b);
-    display.setTextColor(GxEPD_BLACK);
-    display.setCursor(leftMargin + 130, currentY);
-    display.print(calendarItems[i].title);
+    // Draw title (black, indented) with U8G2 readable font
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setFont(u8g2_font_helvR14_tf);  // Helvetica Regular 14pt
+    u8g2Fonts.setCursor(leftMargin + 130, currentY);
+    u8g2Fonts.print(calendarItems[i].title);
     
-    // Draw duration (black, right aligned)
-    display.setFont(&FreeMonoBold12pt7b);
-    int16_t tbx, tby; 
-    uint16_t tbw, tbh;
-    display.getTextBounds(calendarItems[i].duration, 0, 0, &tbx, &tby, &tbw, &tbh);
-    uint16_t durationX = display.width() - rightMargin - tbw;
-    display.setCursor(durationX, currentY);
-    display.print(calendarItems[i].duration);
+    // Draw duration (black, right aligned) with U8G2 monospace font
+    u8g2Fonts.setFont(u8g2_font_profont15_mr);  // Professional monospace font
+    int16_t tw = u8g2Fonts.getUTF8Width(calendarItems[i].duration);
+    uint16_t durationX = display.width() - rightMargin - tw;
+    u8g2Fonts.setCursor(durationX, currentY);
+    u8g2Fonts.print(calendarItems[i].duration);
     
     // Draw subtle separator line between items (except last one)
     if (i < numItems - 1) {
