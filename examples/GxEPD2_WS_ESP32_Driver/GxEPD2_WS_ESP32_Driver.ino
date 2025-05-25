@@ -47,7 +47,8 @@
 #include <GxEPD2_4C.h>
 #include <GxEPD2_7C.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
-
+#include <Fonts/FreeSerif9pt7b.h>
+#include <Fonts/FreeSans24pt7b.h>
 // select the display class (only one), matching the kind of display panel
 #define GxEPD2_DISPLAY_CLASS GxEPD2_BW
 //#define GxEPD2_DISPLAY_CLASS GxEPD2_3C
@@ -118,7 +119,7 @@
 //#define GxEPD2_DRIVER_CLASS GxEPD2_583c     // GDEW0583Z21 600x448, UC8159c (IL0371), (missing)
 //#define GxEPD2_DRIVER_CLASS GxEPD2_583c_Z83 // GDEW0583Z83 648x480, EK79655 (GD7965), (WFT0583CZ61)
 //#define GxEPD2_DRIVER_CLASS GxEPD2_750c     // GDEW075Z09  640x384, UC8159c (IL0371), (WF0583CZ09)
-//#define GxEPD2_DRIVER_CLASS GxEPD2_750c_Z08 // GDEW075Z08  800x480, EK79655 (GD7965), (WFT0583CZ61)
+#define GxEPD2_DRIVER_CLASS GxEPD2_750c_Z08 // GDEW075Z08  800x480, EK79655 (GD7965), (WFT0583CZ61)
 //#define GxEPD2_DRIVER_CLASS GxEPD2_750c_Z90 // GDEH075Z90  880x528, SSD1677, (HINK-E075A07-A0)
 //#define GxEPD2_DRIVER_CLASS GxEPD2_1248c    // GDEY1248Z51 1304x984, UC8179, (WFT1248BZ23,WFT1248BZ24)
 // 4-color e-paper
@@ -152,7 +153,7 @@
 #elif IS_GxEPD2_7C(GxEPD2_DISPLAY_CLASS)
 #define MAX_HEIGHT(EPD) (EPD::HEIGHT <= (MAX_DISPLAY_BUFFER_SIZE) / (EPD::WIDTH / 2) ? EPD::HEIGHT : (MAX_DISPLAY_BUFFER_SIZE) / (EPD::WIDTH / 2))
 #endif
-GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> display(GxEPD2_DRIVER_CLASS(/*CS=*/ 15, /*DC=*/ 27, /*RST=*/ 26, /*BUSY=*/ 25));
+GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> display(GxEPD2_DRIVER_CLASS(/*CS=*/ 5, /*DC=*/ 19, /*RST=*/ 16, /*BUSY=*/ 17));
 #endif
 
 // alternately you can copy the constructor from GxEPD2_display_selection.h of GxEPD_Example to here
@@ -182,40 +183,43 @@ void setup()
 {
   Serial.begin(115200);
   Serial.println();
-  Serial.println("setup");
+  Serial.println("setup 00000");
   // *** special handling for Waveshare ESP32 Driver board *** //
   // ********************************************************* //
 #if defined(ESP32) && defined(USE_HSPI_FOR_EPD)
-  hspi.begin(13, 12, 14, 15); // remap hspi for EPD (swap pins)
+Serial.println("setup 00001");
+  hspi.begin(18, -1, 23, 5); // remap hspi for EPD (swap pins)
+Serial.println("setup 00002");
   display.epd2.selectSPI(hspi, SPISettings(4000000, MSBFIRST, SPI_MODE0));
+Serial.println("setup 00003");  
 #endif
   // *** end of special handling for Waveshare ESP32 Driver board *** //
   // **************************************************************** //
   display.init(115200);
   // first update should be full refresh
   helloWorld();
-  delay(1000);
-  // partial refresh mode can be used to full screen,
-  // effective if display panel hasFastPartialUpdate
+  // delay(1000);
+  // // partial refresh mode can be used to full screen,
+  // // effective if display panel hasFastPartialUpdate
   helloFullScreenPartialMode();
-  delay(1000);
-  helloArduino();
-  delay(1000);
-  helloEpaper();
-  delay(1000);
-  showFont("FreeMonoBold9pt7b", &FreeMonoBold9pt7b);
-  delay(1000);
-  drawBitmaps();
-  if (display.epd2.hasPartialUpdate)
-  {
-    showPartialUpdate();
-    delay(1000);
-  } // else // on GDEW0154Z04 only full update available, doesn't look nice
-  //drawCornerTest();
-  //showBox(16, 16, 48, 32, false);
-  //showBox(16, 56, 48, 32, true);
-  display.powerOff();
-  deepSleepTest();
+  // delay(1000);
+  // helloArduino();
+  // delay(1000);
+  // helloEpaper();
+  // delay(1000);
+  // showFont("FreeMonoBold9pt7b", &FreeMonoBold9pt7b);
+  // delay(1000);
+  // drawBitmaps();
+  // if (display.epd2.hasPartialUpdate)
+  // {
+  //   showPartialUpdate();
+  //   delay(1000);
+  // } // else // on GDEW0154Z04 only full update available, doesn't look nice
+  // //drawCornerTest();
+  // //showBox(16, 16, 48, 32, false);
+  // //showBox(16, 56, 48, 32, true);
+  // display.powerOff();
+  // deepSleepTest();
   Serial.println("setup done");
 }
 
@@ -228,18 +232,19 @@ void loop()
 // the size is increased in setPartialWindow() if x or w are not multiple of 8 for even rotation, y or h for odd rotation
 // see also comment in GxEPD2_BW.h, GxEPD2_3C.h or GxEPD2_GFX.h for method setPartialWindow()
 
-const char HelloWorld[] = "Hello World!";
+const char meow_meow[] = "meow meow!";
 const char HelloArduino[] = "Hello Arduino!";
 const char HelloEpaper[] = "Hello E-Paper!";
 
 void helloWorld()
 {
   //Serial.println("helloWorld");
-  display.setRotation(1);
-  display.setFont(&FreeMonoBold9pt7b);
+  display.setRotation(4);
+  display.setFont(&FreeSans24pt7b);
   display.setTextColor(GxEPD_BLACK);
+  display.setTextSize(2);
   int16_t tbx, tby; uint16_t tbw, tbh;
-  display.getTextBounds(HelloWorld, 0, 0, &tbx, &tby, &tbw, &tbh);
+  display.getTextBounds(meow_meow, 0, 0, &tbx, &tby, &tbw, &tbh);
   // center bounding box by transposition of origin:
   uint16_t x = ((display.width() - tbw) / 2) - tbx;
   uint16_t y = ((display.height() - tbh) / 2) - tby;
@@ -249,7 +254,7 @@ void helloWorld()
   {
     display.fillScreen(GxEPD_WHITE);
     display.setCursor(x, y);
-    display.print(HelloWorld);
+    display.print(meow_meow);
   }
   while (display.nextPage());
   //Serial.println("helloWorld done");
@@ -335,8 +340,8 @@ void helloFullScreenPartialMode()
   display.getTextBounds(updatemode, 0, 0, &tbx, &tby, &tbw, &tbh);
   uint16_t umx = ((display.width() - tbw) / 2) - tbx;
   uint16_t umy = ((display.height() * 3 / 4) - tbh / 2) - tby;
-  // center HelloWorld
-  display.getTextBounds(HelloWorld, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // center meow_meow
+  display.getTextBounds(meow_meow, 0, 0, &tbx, &tby, &tbw, &tbh);
   uint16_t hwx = ((display.width() - tbw) / 2) - tbx;
   uint16_t hwy = ((display.height() - tbh) / 2) - tby;
   display.firstPage();
@@ -344,7 +349,7 @@ void helloFullScreenPartialMode()
   {
     display.fillScreen(GxEPD_WHITE);
     display.setCursor(hwx, hwy);
-    display.print(HelloWorld);
+    display.print(meow_meow);
     display.setCursor(utx, uty);
     display.print(fullscreen);
     display.setCursor(umx, umy);
@@ -361,8 +366,8 @@ void helloArduino()
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(display.epd2.hasColor ? GxEPD_RED : GxEPD_BLACK);
   int16_t tbx, tby; uint16_t tbw, tbh;
-  // align with centered HelloWorld
-  display.getTextBounds(HelloWorld, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // align with centered meow_meow
+  display.getTextBounds(meow_meow, 0, 0, &tbx, &tby, &tbw, &tbh);
   uint16_t x = ((display.width() - tbw) / 2) - tbx;
   // height might be different
   display.getTextBounds(HelloArduino, 0, 0, &tbx, &tby, &tbw, &tbh);
@@ -391,8 +396,8 @@ void helloEpaper()
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(display.epd2.hasColor ? GxEPD_RED : GxEPD_BLACK);
   int16_t tbx, tby; uint16_t tbw, tbh;
-  // align with centered HelloWorld
-  display.getTextBounds(HelloWorld, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // align with centered meow_meow
+  display.getTextBounds(meow_meow, 0, 0, &tbx, &tby, &tbw, &tbh);
   uint16_t x = ((display.width() - tbw) / 2) - tbx;
   // height might be different
   display.getTextBounds(HelloEpaper, 0, 0, &tbx, &tby, &tbw, &tbh);
