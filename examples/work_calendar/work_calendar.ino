@@ -168,10 +168,10 @@ void drawHeader()
 void drawCalendarItems()
 {
   uint16_t startY = 100; // Start closer to header since no title
-  uint16_t itemHeight = 80; // Space between items
+  uint16_t itemHeight = 85; // Slightly more space for larger fonts
   uint16_t leftMargin = 40;
   uint16_t rightMargin = 40;
-  uint16_t timeWidth = 140; // Fixed width for time column
+  uint16_t timeWidth = 150; // Slightly wider for larger time font
   
   for (int i = 0; i < numItems; i++) {
     uint16_t currentY = startY + (i * itemHeight);
@@ -183,21 +183,21 @@ void drawCalendarItems()
       display.fillCircle(leftMargin - 20, currentY - 5, 6, GxEPD_RED);
     }
     
-    // Draw time with professional monospace font
+    // Draw time with larger professional monospace font
     u8g2Fonts.setForegroundColor(GxEPD_RED);
-    u8g2Fonts.setFont(u8g2_font_profont15_mr);  // Professional monospace
+    u8g2Fonts.setFont(u8g2_font_profont15_mr);  // Available monospace font
     u8g2Fonts.setCursor(leftMargin, currentY);
     u8g2Fonts.print(calendarItems[i].time);
     
-    // Draw meeting title with clean sans-serif font
+    // Draw meeting title with larger clean sans-serif font
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
-    u8g2Fonts.setFont(u8g2_font_helvR14_tf);  // Helvetica Regular 14pt
+    u8g2Fonts.setFont(u8g2_font_helvR18_tf);  // Available larger Helvetica Regular
     u8g2Fonts.setCursor(leftMargin + timeWidth, currentY);
     u8g2Fonts.print(calendarItems[i].title);
     
-    // Draw duration with smaller monospace font (right aligned)
+    // Draw duration with larger monospace font (right aligned)
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
-    u8g2Fonts.setFont(u8g2_font_profont12_mr);  // Smaller monospace
+    u8g2Fonts.setFont(u8g2_font_profont12_mr);  // Available monospace for duration
     int16_t tw = u8g2Fonts.getUTF8Width(calendarItems[i].duration);
     uint16_t durationX = display.width() - rightMargin - tw;
     u8g2Fonts.setCursor(durationX, currentY);
@@ -205,7 +205,7 @@ void drawCalendarItems()
     
     // Draw subtle separator line between items (except last one)
     if (i < numItems - 1) {
-      uint16_t lineY = currentY + 35;
+      uint16_t lineY = currentY + 38; // Adjusted for larger fonts
       // Dotted line effect with small rectangles
       for (uint16_t x = leftMargin + timeWidth; x < display.width() - rightMargin; x += 8) {
         display.fillRect(x, lineY, 4, 1, GxEPD_BLACK);
