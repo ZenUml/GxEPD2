@@ -148,9 +148,9 @@ void drawHeader()
   u8g2Fonts.setFontDirection(0);            // left to right
   u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
   
-  // Draw date with clean U8G2 font
-  u8g2Fonts.setForegroundColor(GxEPD_RED);
-  u8g2Fonts.setFont(u8g2_font_helvR16_tf);  // Helvetica Regular 16pt - larger for better readability
+  // Draw date only - clean and simple
+  u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+  u8g2Fonts.setFont(u8g2_font_helvB18_tf);  // Helvetica Bold 18pt for date
   
   const char* dateText = "Monday, December 16, 2024";
   int16_t tw = u8g2Fonts.getUTF8Width(dateText);
@@ -160,78 +160,51 @@ void drawHeader()
   u8g2Fonts.setCursor(dateX, dateY);
   u8g2Fonts.print(dateText);
   
-  // Draw main title with bold U8G2 font
-  u8g2Fonts.setForegroundColor(GxEPD_BLACK);
-  u8g2Fonts.setFont(u8g2_font_helvB24_tf);  // Helvetica Bold 24pt - much larger and bolder
-  const char* titleText = "Engineering Calendar";
-  tw = u8g2Fonts.getUTF8Width(titleText);
-  uint16_t titleX = (display.width() - tw) / 2;
-  uint16_t titleY = dateY + 60;
-  
-  u8g2Fonts.setCursor(titleX, titleY);
-  u8g2Fonts.print(titleText);
-  
-  // Draw decorative separator line
-  uint16_t lineY = titleY + 30;
-  display.fillRect(60, lineY, display.width() - 120, 3, GxEPD_BLACK);
+  // Draw simple separator line
+  uint16_t lineY = dateY + 25;
+  display.fillRect(60, lineY, display.width() - 120, 2, GxEPD_BLACK);
 }
 
 void drawCalendarItems()
 {
-  uint16_t startY = 160; // Start below redesigned header
-  uint16_t itemHeight = 80; // More space for better readability
+  uint16_t startY = 100; // Start closer to header since no title
+  uint16_t itemHeight = 80; // Space between items
   uint16_t leftMargin = 40;
   uint16_t rightMargin = 40;
   uint16_t timeWidth = 140; // Fixed width for time column
   
-  // Draw column headers
-  u8g2Fonts.setForegroundColor(GxEPD_BLACK);
-  u8g2Fonts.setFont(u8g2_font_helvB14_tf);  // Bold headers
-  u8g2Fonts.setCursor(leftMargin, startY - 25);
-  u8g2Fonts.print("TIME");
-  u8g2Fonts.setCursor(leftMargin + timeWidth, startY - 25);
-  u8g2Fonts.print("MEETING");
-  
-  int16_t tw = u8g2Fonts.getUTF8Width("DURATION");
-  uint16_t durationHeaderX = display.width() - rightMargin - tw;
-  u8g2Fonts.setCursor(durationHeaderX, startY - 25);
-  u8g2Fonts.print("DURATION");
-  
-  // Draw header underline
-  display.fillRect(leftMargin, startY - 15, display.width() - leftMargin - rightMargin, 2, GxEPD_BLACK);
-  
   for (int i = 0; i < numItems; i++) {
     uint16_t currentY = startY + (i * itemHeight);
     
-    // Highlight current meeting (example: second meeting)
+    // Indicate current meeting with a simple red dot instead of background
     bool isCurrentMeeting = (i == 1);
     if (isCurrentMeeting) {
-      // Draw subtle background for current meeting
-      display.fillRect(leftMargin - 10, currentY - 20, display.width() - leftMargin - rightMargin + 20, 50, GxEPD_RED);
+      // Draw red indicator dot
+      display.fillCircle(leftMargin - 20, currentY - 5, 6, GxEPD_RED);
     }
     
     // Draw time with professional monospace font
-    u8g2Fonts.setForegroundColor(isCurrentMeeting ? GxEPD_WHITE : GxEPD_RED);
-    u8g2Fonts.setFont(u8g2_font_profont17_mr);  // Professional monospace 17pt
+    u8g2Fonts.setForegroundColor(GxEPD_RED);
+    u8g2Fonts.setFont(u8g2_font_profont15_mr);  // Professional monospace
     u8g2Fonts.setCursor(leftMargin, currentY);
     u8g2Fonts.print(calendarItems[i].time);
     
     // Draw meeting title with clean sans-serif font
-    u8g2Fonts.setForegroundColor(isCurrentMeeting ? GxEPD_WHITE : GxEPD_BLACK);
-    u8g2Fonts.setFont(u8g2_font_helvR16_tf);  // Helvetica Regular 16pt for readability
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setFont(u8g2_font_helvR14_tf);  // Helvetica Regular 14pt
     u8g2Fonts.setCursor(leftMargin + timeWidth, currentY);
     u8g2Fonts.print(calendarItems[i].title);
     
     // Draw duration with smaller monospace font (right aligned)
-    u8g2Fonts.setForegroundColor(isCurrentMeeting ? GxEPD_WHITE : GxEPD_BLACK);
-    u8g2Fonts.setFont(u8g2_font_profont15_mr);  // Slightly smaller for duration
-    tw = u8g2Fonts.getUTF8Width(calendarItems[i].duration);
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setFont(u8g2_font_profont12_mr);  // Smaller monospace
+    int16_t tw = u8g2Fonts.getUTF8Width(calendarItems[i].duration);
     uint16_t durationX = display.width() - rightMargin - tw;
     u8g2Fonts.setCursor(durationX, currentY);
     u8g2Fonts.print(calendarItems[i].duration);
     
     // Draw subtle separator line between items (except last one)
-    if (i < numItems - 1 && !isCurrentMeeting) {
+    if (i < numItems - 1) {
       uint16_t lineY = currentY + 35;
       // Dotted line effect with small rectangles
       for (uint16_t x = leftMargin + timeWidth; x < display.width() - rightMargin; x += 8) {
@@ -240,13 +213,13 @@ void drawCalendarItems()
     }
   }
   
-  // Add a footer note
+  // Add a simple footer note
   u8g2Fonts.setForegroundColor(GxEPD_BLACK);
-  u8g2Fonts.setFont(u8g2_font_helvR12_tf);  // Small font for footer
-  const char* footerText = "● Current Meeting    Updated: Real-time";
-  tw = u8g2Fonts.getUTF8Width(footerText);
+  u8g2Fonts.setFont(u8g2_font_helvR10_tf);  // Small font for footer
+  const char* footerText = "● Current Meeting";
+  int16_t tw = u8g2Fonts.getUTF8Width(footerText);
   uint16_t footerX = display.width() - rightMargin - tw;
-  uint16_t footerY = startY + (numItems * itemHeight) + 30;
+  uint16_t footerY = startY + (numItems * itemHeight) + 20;
   u8g2Fonts.setCursor(footerX, footerY);
   u8g2Fonts.print(footerText);
 }
